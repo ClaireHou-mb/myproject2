@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Playbook</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        h1#pageTitle {
+            text-align: center;
+            margin-bottom: 30px;
+            transition: color 0.3s ease;
+        }
+        h2 {
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #controls {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        #brand-selection, #objective-selection {
+            margin-bottom: 20px;
+        }
+
+        #brand-selection div, #objective-selection div {
+            margin-bottom: 8px;
+        }
+        
+        #objective-selection .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        label {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        
+        input[type="radio"], input[type="checkbox"] {
+            margin-right: 5px;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        #generateButton, #resetButton, #exportButton {
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #generateButton {
+            /* Background will be set by JS based on brand theme */
+        }
+
+        #resetButton {
+            background-color: #6c757d; 
+        }
+        #resetButton:hover {
+            background-color: #5a6268;
+        }
+
+        #exportButton {
+            background-color: #28a745; /* Green */
+        }
+        #exportButton:hover {
+            background-color: #218838;
+        }
+
+        #table-container {
+            margin-top: 30px;
+            overflow-x: auto; 
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 10px; 
+        }
+        
+        #table-container p { 
+            text-align: center;
+            color: #777;
+            font-size: 1.1em;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px; 
+        }
+
+        th, td {
+            border: 1px solid #555; /* Uniform dark gray border for all cells */
+            padding: 12px; 
+            text-align: center; 
+            vertical-align: middle; 
+        }
+        
+        td sup, th sup { 
+            vertical-align: super;
+            font-size: smaller;
+            line-height: 0; 
+            margin-left: 1px;
+        }
+
+        thead th { 
+            background-color: #e9ecef;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .brand-header-cell { 
+            text-align: center !important; 
+            font-size: 1.3em; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-label { 
+            font-weight: bold;
+            background-color: #f8f9fa; 
+            width: 220px; 
+            text-align: left !important; 
+        }
+        
+        thead tr:first-child th:first-child { 
+            background-color: #fff !important; 
+            border: none !important; 
+        }
+
+        .fame-flow-data-row td, .objective-data-row td {
+            font-weight: bold; 
+        }
+        
+        /* .objective-divider-right class is removed as all borders are uniform now */
+
+
+        #footnote-container {
+            margin-top: 15px; 
+            padding: 10px 20px;
+            font-size: 0.85em;
+            color: #444;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #footnote-container h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: #333;
+            text-align: left; 
+        }
+        #footnote-container ol {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+            column-count: 3; 
+            column-gap: 20px; 
+            text-align: left; 
+        }
+        #footnote-container li {
+            margin-bottom: 4px;
+            break-inside: avoid-column; 
+        }
+        #footnote-container li sup {
+            margin-right: 4px;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 id="pageTitle">Performance Playbook</h1>
+
+        <div id="controls">
+            <div id="brand-selection">
+                <h2>1. Select a Brand:</h2>
+                </div>
+            <div id="objective-selection">
+                <h2>2. Select Objectives:</h2>
+                <div class="checkbox-grid">
+                    </div>
+            </div>
+            <div class="button-container">
+                <button id="generateButton">Generate Measurement Framework</button>
+                <button id="resetButton">Reset Selections</button>
+            </div>
+        </div>
+
+        <div id="table-container">
+             <p id="tablePlaceholder">Select a brand and objectives, then click "Generate" to see your framework.</p>
+        </div>
+
+        <div class="button-container" style="margin-top: 20px; margin-bottom: 20px;"> 
+            <button id="exportButton">Export Framework</button>
+        </div>
+        
+        <div id="footnote-container" style="display: none;">
+            {/* Footnotes will be generated here by JavaScript */}
+        </div>
+        
+    </div>
+
+    <script>
+        // --- DATA DEFINITIONS ---
+        const brands = ["Marshalls", "HomeGoods", "Sierra"];
+        const desiredObjectiveOrder = ["TOMA", "Brand Impact", "Buzz & Cultural Impact", "Market Share", "Customer Growth", "Online Traffic", "Store Traffic", "Sales"];
+
+
+        // Framework Data from CSV 
+        const frameworkCsvDataString = `'Brand','Fame & Flow','Objective','Primary KPI','Benchmark','Optimization Proxy','Diagnostic & Monitoring Metric'
+'Marshalls','Familiarity','TOMA','Ad Awareness','+6 to +12pp lift','Attention','Weekly Reach & Frequency'
+'Marshalls','Familiarity','TOMA','Unaided Brand Awareness','+1 to +4pp lift','Attention','N/A'
+'Marshalls','Favorability & Feeling','Brand Impact','Brand Consideraton','+4 to +8pp lift','Content/Site Engagement','N/A'
+'Marshalls','Favorability & Feeling','Brand Impact','Brand Favorability','+3 to +6pp lift','Content/Site Engagement','N/A'
+'Marshalls','Favorability & Feeling','Brand Impact','Perception Shift','+2 to +6pp lift','Content/Site Engagement','N/A'
+'Marshalls','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Influencer Engagement','Social Conversation & Sentiment'
+'Marshalls','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Organic Social Engagement','Social Conversation & Sentiment'
+'Marshalls','Fascination & Following','Customer Growth','New Customers/Loyalty Members','+3 to 5% Annual Growth','New Customer Files','Store Visits'
+'Marshalls','Findability & Facilitation','Market Share','Share Growth','+1 to 2% Annual Growth','Competitor Store Visits','Competitor Branded Search Volume'
+'Marshalls','Findability & Facilitation','Sales','Online & Offline Sales/ROAS','$3 to $8 Avg ROAS','Cost per Sale Conversion','Branded Search Trends'
+'Marshalls','Findability & Facilitation','Store Traffic','Store Visits','2M+ per Week','Cost per Store Visit','Branded Search Trends'
+'Marshalls','Findability & Facilitation','Online Traffic','Site Visits','10M+ per Week','Cost per Site Visit','Site Analytics Pageviews'
+'HomeGoods','Familiarity','TOMA','Ad Awareness','+6 to +12pp lift','Attention','Weekly Reach & Frequency'
+'HomeGoods','Familiarity','TOMA','Unaided Brand Awareness','+1 to +4pp lift','Attention','N/A'
+'HomeGoods','Favorability & Feeling','Brand Impact','Brand Consideraton','+4 to +8pp lift','Content/Site Engagement','N/A'
+'HomeGoods','Favorability & Feeling','Brand Impact','Brand Favorability','+3 to +6pp lift','Content/Site Engagement','N/A'
+'HomeGoods','Favorability & Feeling','Brand Impact','Perception Shift','+2 to +6pp lift','Content/Site Engagement','N/A'
+'HomeGoods','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Influencer Engagement','Social Conversation & Sentiment'
+'HomeGoods','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Organic Social Engagement','Social Conversation & Sentiment'
+'HomeGoods','Fascination & Following','Customer Growth','New Customers/Loyalty Members','+3 to 5% Annual Growth','New Customer Files','Store Visits'
+'HomeGoods','Findability & Facilitation','Market Share','Share Growth','+1 to 2% Annual Growth','Competitor Store Visits','Competitor Branded Search Volume'
+'HomeGoods','Findability & Facilitation','Sales','Online & Offline Sales/ROAS','$3 to $8 Avg ROAS','Cost per Sale Conversion','Branded Search Trends'
+'HomeGoods','Findability & Facilitation','Store Traffic','Store Visits','2M+ per Week','Cost per Store Visit','Branded Search Trends'
+'HomeGoods','Findability & Facilitation','Online Traffic','Site Visits','10M+ per Week','Cost per Site Visit','Site Analytics Pageviews'
+'Sierra','Familiarity','TOMA','Ad Awareness','+6 to +12pp lift','Attention','Weekly Reach & Frequency'
+'Sierra','Familiarity','TOMA','Unaided Brand Awareness','+1 to +4pp lift','Attention','N/A'
+'Sierra','Favorability & Feeling','Brand Impact','Brand Consideraton','+4 to +8pp lift','Content/Site Engagement','N/A'
+'Sierra','Favorability & Feeling','Brand Impact','Brand Favorability','+3 to +6pp lift','Content/Site Engagement','N/A'
+'Sierra','Favorability & Feeling','Brand Impact','Perception Shift','+2 to +6pp lift','Content/Site Engagement','N/A'
+'Sierra','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Influencer Engagement','Social Conversation & Sentiment'
+'Sierra','Feeling & Fervor','Buzz & Cultural Impact','Brand Relevance','+3 to 6pp lift','Organic Social Engagement','Social Conversation & Sentiment'
+'Sierra','Fascination & Following','Customer Growth','New Customers/Loyalty Members','+3 to 5% Annual Growth','New Customer Files','Store Visits'
+'Sierra','Findability & Facilitation','Market Share','Share Growth','+1 to 2% Annual Growth','Competitor Store Visits','Competitor Branded Search Volume'
+'Sierra','Findability & Facilitation','Sales','Online & Offline Sales/ROAS','$3 to $8 Avg ROAS','Cost per Sale Conversion','Branded Search Trends'
+'Sierra','Findability & Facilitation','Store Traffic','Store Visits','2M+ per Week','Cost per Store Visit','Branded Search Trends'
+'Sierra','Findability & Facilitation','Online Traffic','Site Visits','10M+ per Week','Cost per Site Visit','Site Analytics Pageviews'`;
+
+        // Data sources CSV string
+        const dataSourcesCsvString = `'Metric','Data Source'
+'Ad Awareness','Brand Lift Study/YouGov'
+'Unaided Brand Awareness','Brand Lift Study/YouGov'
+'Brand Consideraton','Brand Lift Study/YouGov'
+'Brand Favorability','Brand Lift Study/YouGov'
+'Perception Shift','Brand Lift Study'
+'Brand Relevance','Brand Lift Study'
+'New Customers/Loyalty Members','TJX 1PD/Acxiom'
+'Site Visits','CM360 Floodlight'
+'Share Growth','Acxiom Location Data/AdIntel/TJX'
+'Online & Offline Sales/ROAS','CM360/TJX Transactions'
+'Store Visits','Acxiom Location Tracking'
+'Attention','Adelaide/Lumen/IAS/DoubleVerify'
+'Content/Site Engagement','CM360 Floodlight/DCO/Media Partner'
+'Influencer Engagement','CreatorIQ'
+'Organic Social Engagement','Social Platform (e.g./Meta)'
+'New Customer Files','Acxiom/TJX 1PD'
+'Competitor Store Visits','Acxiom Location Tracking'
+'Cost per Sale Conversion','CM360'
+'Cost per Site Visit','CM360'
+'Weekly Reach & Frequency','CM360/NielsenOne x Acxiom'
+'Social Conversation & Sentiment','Quid Netbase/Pulsar'
+'Competitor Branded Search Volume','Google Trends'
+'Branded Search Trends','Google Trends'
+'Site Analytics Pageviews','Adobe/Google Analytics'`;
+
+        let dataSourcesMap = new Map();
+        let allData = []; 
+
+        // --- THEME DEFINITIONS ---
+        const brandThemes = {
+            "Marshalls": { 
+                pageTitleColor: "#0056b3", buttonBg: "#007bff", buttonHoverBg: "#0056b3", 
+                tableBrandHeaderBgDark: "#004085", tableBrandHeaderText: "#ffffff", 
+                tableFameFlowRowBg: "#b8daff", tableFameFlowRowText: "#003063", 
+                tableObjectiveRowBg: "#cfe2ff", tableObjectiveRowText: "#004085" 
+            },
+            "HomeGoods": { 
+                pageTitleColor: "#c82333", buttonBg: "#dc3545", buttonHoverBg: "#c82333", 
+                tableBrandHeaderBgDark: "#a71d2a", tableBrandHeaderText: "#ffffff", 
+                tableFameFlowRowBg: "#f5c6cb", tableFameFlowRowText: "#651219", 
+                tableObjectiveRowBg: "#f8d7da", tableObjectiveRowText: "#721c24" 
+            },
+            "Sierra": { 
+                pageTitleColor: "#cca300", buttonBg: "#ffc107", buttonHoverBg: "#e0a800", 
+                tableBrandHeaderBgDark: "#b38f00", tableBrandHeaderText: "#ffffff", 
+                tableFameFlowRowBg: "#ffeeba", tableFameFlowRowText: "#7a5900", 
+                tableObjectiveRowBg: "#fff3cd", tableObjectiveRowText: "#856404" 
+            },
+            "default": { 
+                pageTitleColor: "#333", buttonBg: "#007bff", buttonHoverBg: "#0056b3", 
+                tableBrandHeaderBgDark: "#5a6268", tableBrandHeaderText: "#ffffff", 
+                tableFameFlowRowBg: "#d6d8db", tableFameFlowRowText: "#343a40", 
+                tableObjectiveRowBg: "#e9ecef", tableObjectiveRowText: "#495057" 
+            }
+        };
+        
+        function applyTheme(brandName) {
+            const theme = brandThemes[brandName] || brandThemes.default; 
+            const pageTitleEl = document.getElementById('pageTitle');
+            const generateBtnEl = document.getElementById('generateButton');
+
+            if (pageTitleEl) pageTitleEl.style.color = theme.pageTitleColor;
+            if (generateBtnEl) {
+                generateBtnEl.style.backgroundColor = theme.buttonBg;
+                generateBtnEl.onmouseover = () => generateBtnEl.style.backgroundColor = theme.buttonHoverBg;
+                generateBtnEl.onmouseout = () => generateBtnEl.style.backgroundColor = theme.buttonBg;
+            }
+            const existingTableBrandHeader = document.querySelector('#table-container .brand-header-cell');
+            if (existingTableBrandHeader) {
+                existingTableBrandHeader.style.backgroundColor = theme.tableBrandHeaderBgDark;
+                existingTableBrandHeader.style.color = theme.tableBrandHeaderText;
+            }
+            const fameFlowDataRows = document.querySelectorAll('#table-container .fame-flow-data-row td:not(.metric-label)');
+            fameFlowDataRows.forEach(cell => {
+                cell.style.backgroundColor = theme.tableFameFlowRowBg;
+                cell.style.color = theme.tableFameFlowRowText;
+            });
+            const objectiveDataRows = document.querySelectorAll('#table-container .objective-data-row td:not(.metric-label)');
+             objectiveDataRows.forEach(cell => {
+                cell.style.backgroundColor = theme.tableObjectiveRowBg;
+                cell.style.color = theme.tableObjectiveRowText;
+            });
+        }
+
+        function parseCsvOrTsvLine(line, delimiter = ',') { 
+            const values = [];
+            const regex = new RegExp(
+                `"([^"]*(""[^"]*)*)"` +
+                `|'([^']*)'` +
+                `|([^${delimiter}\\r\\n]+)` +
+                `(?:${delimiter}|\\r?\\n|$)`,
+                'g'
+            );
+            let match;
+            while ((match = regex.exec(line)) !== null) {
+                let value;
+                if (match[1] !== undefined) { 
+                    value = match[1].replace(/""/g, '"');
+                } else if (match[3] !== undefined) { 
+                    value = match[3];
+                } else if (match[4] !== undefined) { 
+                    value = match[4];
+                } else {
+                    value = ''; 
+                }
+                values.push(value.trim());
+                if (match.index === regex.lastIndex) { 
+                    regex.lastIndex++;
+                }
+            }
+            if (line.endsWith(delimiter)) {
+                values.push('');
+            }
+            return values;
+        }
+        
+        function parseFrameworkData(csvString) {
+            const lines = csvString.trim().split('\n');
+            if (lines.length < 2) { 
+                return [];
+            }
+            const headers = parseCsvOrTsvLine(lines[0],','); 
+            const records = [];
+            const headerMap = {
+                brand: headers.indexOf('Brand'),
+                fameAndFlow: headers.indexOf('Fame & Flow'), 
+                objective: headers.indexOf('Objective'),
+                primaryKPI: headers.indexOf('Primary KPI'),
+                benchmark: headers.indexOf('Benchmark'),
+                optimizationProxy: headers.indexOf('Optimization Proxy'),
+                diagnosticMetric: headers.indexOf('Diagnostic & Monitoring Metric')
+            };
+
+            if (Object.values(headerMap).some(index => index === -1) || headerMap.fameAndFlow === -1) {
+                console.error("Framework CSV parsing error: One or more key headers are missing (ensure 'Fame & Flow' is present). Parsed headers:", headers, "HeaderMap indices:", headerMap); 
+                alert("Error: Core CSV headers are missing in the framework data. Cannot generate the framework.");
+                return [];
+            }
+
+            for (let i = 1; i < lines.length; i++) {
+                const rowString = lines[i];
+                if (rowString.trim() === "") { 
+                    continue;
+                }
+                const values = parseCsvOrTsvLine(rowString,','); 
+                if (values.length >= headers.length) { 
+                    const record = {
+                        brand: values[headerMap.brand], 
+                        fameAndFlow: values[headerMap.fameAndFlow], 
+                        objective: values[headerMap.objective],
+                        primaryKPI: values[headerMap.primaryKPI], 
+                        benchmark: values[headerMap.benchmark],
+                        optimizationProxy: values[headerMap.optimizationProxy],
+                        diagnosticMetric: values[headerMap.diagnosticMetric]
+                    };
+                    records.push(record);
+                } else {
+                     console.warn(`Skipping framework CSV row from line ${i + 1} due to column count mismatch. Expected ${headers.length}, got ${values.length}. Row content: "${rowString}", Parsed values:`, values); 
+                }
+            }
+            return records;
+        }
+
+        function parseDataSources(csvString) {
+            const map = new Map();
+            const lines = csvString.trim().split('\n');
+            if (lines.length < 2) return map; 
+            const headers = parseCsvOrTsvLine(lines[0],','); 
+            const metricIndex = headers.indexOf('Metric');
+            const dataSourceIndex = headers.indexOf('Data Source');
+
+            if (metricIndex === -1 || dataSourceIndex === -1) {
+                console.error("Data sources CSV headers 'Metric' or 'Data Source' not found.", headers);
+                alert("Error: Could not parse data sources CSV due to missing 'Metric' or 'Data Source' headers.");
+                return map; 
+            }
+
+            for (const row of lines.slice(1)) { 
+                if (row.trim() === "") continue; 
+                const values = parseCsvOrTsvLine(row,',');
+                if (values.length > Math.max(metricIndex, dataSourceIndex)) {
+                    const metric = values[metricIndex].trim(); 
+                    const source = values[dataSourceIndex].trim();
+                    if (metric && source) { 
+                        map.set(metric, source);
+                    }
+                } else {
+                     console.warn(`Skipping data source row due to column count mismatch. Row: "${row}"`);
+                }
+            }
+            return map;
+        }
+        
+        function initializeDataAndControls() {
+            let parsedData = parseFrameworkData(frameworkCsvDataString);
+            const uniqueDataStrings = new Set();
+            allData = parsedData.filter(item => {
+                const itemString = `${item.brand}|${item.fameAndFlow}|${item.objective}|${item.primaryKPI}|${item.benchmark}|${item.optimizationProxy}|${item.diagnosticMetric}`;
+                if (uniqueDataStrings.has(itemString)) {
+                    return false;
+                }
+                uniqueDataStrings.add(itemString);
+                return true;
+            });
+
+            dataSourcesMap = parseDataSources(dataSourcesCsvString); 
+            const tablePlaceholderText = "Select a brand and objectives, then click \"Generate\" to see your framework.";
+
+            const brandSelectionDiv = document.getElementById('brand-selection');
+            brandSelectionDiv.innerHTML = '<h2>1. Select a Brand:</h2>'; 
+            brands.forEach((brand, index) => {
+                const input = document.createElement('input');
+                input.type = 'radio'; 
+                input.id = `brand_${brand.toLowerCase().replace(/\s+/g,'')}`; 
+                input.name = 'brand'; 
+                input.value = brand;
+                const label = document.createElement('label');
+                label.htmlFor = input.id; 
+                label.textContent = brand;
+                const div = document.createElement('div'); 
+                div.appendChild(input); 
+                div.appendChild(label);
+                brandSelectionDiv.appendChild(div);
+                input.addEventListener('change', function() { if (this.checked) applyTheme(this.value); });
+                if (index === 0) { 
+                    input.checked = true; 
+                    applyTheme(brand); 
+                }
+            });
+
+            const objectiveSelectionGrid = document.getElementById('objective-selection').querySelector('.checkbox-grid');
+            objectiveSelectionGrid.innerHTML = ''; 
+            const uniqueObjectivesFromData = new Set(allData.map(item => item.objective)); 
+            
+            desiredObjectiveOrder.forEach(objective => { 
+                if (uniqueObjectivesFromData.has(objective)) { 
+                    const input = document.createElement('input');
+                    input.type = 'checkbox'; 
+                    input.id = `obj_${objective.toLowerCase().replace(/\s+/g,'').replace('&','and')}`; 
+                    input.name = 'objective'; 
+                    input.value = objective;
+                    const label = document.createElement('label');
+                    label.htmlFor = input.id; 
+                    label.textContent = objective;
+                    const div = document.createElement('div'); 
+                    div.appendChild(input); 
+                    div.appendChild(label);
+                    objectiveSelectionGrid.appendChild(div);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeDataAndControls);
+
+        document.getElementById('generateButton').addEventListener('click', function() {
+            const selectedBrandRadio = document.querySelector('input[name="brand"]:checked');
+            const selectedBrand = selectedBrandRadio ? selectedBrandRadio.value : null;
+            const selectedObjectiveCheckboxes = document.querySelectorAll('input[name="objective"]:checked');
+            const initiallySelectedObjectives = Array.from(selectedObjectiveCheckboxes).map(cb => cb.value);
+
+            if (!selectedBrand) { alert("Please select a brand."); return; }
+            if (initiallySelectedObjectives.length === 0) { alert("Please select at least one objective."); return; }
+            
+            generateTable(selectedBrand, initiallySelectedObjectives);
+        });
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            const brandRadios = document.querySelectorAll('input[name="brand"]');
+            if (brandRadios.length > 0) {
+                brandRadios[0].checked = true;
+                applyTheme(brandRadios[0].value); 
+            }
+            document.querySelectorAll('input[name="objective"]').forEach(cb => cb.checked = false);
+            const tableContainer = document.getElementById('table-container');
+            const placeholderP = document.createElement('p');
+            placeholderP.id = 'tablePlaceholder'; 
+            placeholderP.textContent = "Select a brand and objectives, then click \"Generate\" to see your framework.";
+            tableContainer.innerHTML = ''; 
+            tableContainer.appendChild(placeholderP);
+            
+            const footnoteContainer = document.getElementById('footnote-container');
+            footnoteContainer.innerHTML = ''; 
+            footnoteContainer.style.display = 'none'; 
+        });
+
+        document.getElementById('exportButton').addEventListener('click', function() {
+            const tableToExport = document.querySelector('#table-container table');
+            const footnoteContainer = document.getElementById('footnote-container');
+
+            if (!tableToExport) {
+                alert("Please generate a table first before attempting to export.");
+                return;
+            }
+            if (typeof html2canvas !== 'function') {
+                alert("Image export functionality (html2canvas) is not available. Please ensure the library is loaded.");
+                console.error("html2canvas is not defined or not loaded correctly.");
+                return;
+            }
+
+            const exportWrapper = document.createElement('div');
+            exportWrapper.style.padding = '20px'; 
+            exportWrapper.style.backgroundColor = '#ffffff'; 
+            exportWrapper.style.display = 'inline-block'; 
+
+            const tableClone = tableToExport.cloneNode(true);
+            exportWrapper.appendChild(tableClone);
+
+            if (footnoteContainer.innerHTML.trim() !== '' && footnoteContainer.style.display !== 'none') {
+                const footnoteClone = footnoteContainer.cloneNode(true);
+                footnoteClone.style.display = 'block'; 
+                footnoteClone.style.marginTop = '20px'; 
+                footnoteClone.style.padding = '10px'; 
+                footnoteClone.style.boxShadow = 'none'; 
+                exportWrapper.appendChild(footnoteClone);
+            }
+            
+            document.body.appendChild(exportWrapper);
+
+            html2canvas(exportWrapper, { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false, 
+                backgroundColor: null 
+            }).then(canvas => {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = image; 
+                link.download = 'performance-framework.png'; 
+                document.body.appendChild(link); 
+                link.click(); 
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error('Error exporting content to image:', err);
+                alert('Could not export content to image. Please check the console for more details.');
+            }).finally(() => {
+                if (document.body.contains(exportWrapper)) {
+                    document.body.removeChild(exportWrapper);
+                }
+            });
+        });
+        
+        function getMetricHTMLWithFootnote(metricValue, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef) {
+            let html = metricValue;
+            if (metricValue !== "N/A") {
+                let dataSourceText = dataSourcesMap.get(metricValue);
+                if (!dataSourceText && metricValue.endsWith(".")) {
+                     const trimmedMetricForLookup = metricValue.slice(0, -1).trim();
+                     const foundTrimmedSource = dataSourcesMap.get(trimmedMetricForLookup);
+                     if(foundTrimmedSource) dataSourceText = foundTrimmedSource;
+                }
+                if (dataSourceText) { 
+                    let currentNumber;
+                    if (dataSourceToNumberMap.has(dataSourceText)) { 
+                        currentNumber = dataSourceToNumberMap.get(dataSourceText);
+                    } else { 
+                        currentNumber = nextFootnoteNumberRef.value++; 
+                        dataSourceToNumberMap.set(dataSourceText, currentNumber);
+                        footnoteItems.push({ number: currentNumber, text: dataSourceText });
+                    }
+                    html = `${metricValue}<sup>${currentNumber}</sup>`; 
+                }
+            }
+            return html;
+        }
+        
+        function processBufferedCells(trData, buffer, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef, applyDarkBorderToLast) {
+            if (buffer.length === 0) return;
+            let i = 0;
+            while (i < buffer.length) {
+                let currentValue = buffer[i].value; 
+                let count = 1;
+                let j = i + 1;
+                while (j < buffer.length && buffer[j].value === currentValue) {
+                    count++;
+                    j++;
+                }
+                const td = document.createElement('td');
+                td.innerHTML = getMetricHTMLWithFootnote(currentValue, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef);
+                td.colSpan = count;
+                
+                if (applyDarkBorderToLast) { 
+                     td.classList.add('objective-divider-right');
+                }
+                trData.appendChild(td);
+                i = j; 
+            }
+        }
+
+        // --- TABLE GENERATION LOGIC ---
+        function generateTable(brand, selectedObjectives) {
+            const tableContainer = document.getElementById('table-container');
+            tableContainer.innerHTML = ''; 
+            const footnoteContainer = document.getElementById('footnote-container');
+            footnoteContainer.innerHTML = ''; 
+            footnoteContainer.style.display = 'none'; 
+
+            let footnoteItems = []; 
+            let dataSourceToNumberMap = new Map(); 
+            let nextFootnoteNumberRef = { value: 1 }; 
+
+            const currentTheme = brandThemes[brand] || brandThemes.default; 
+            const brandData = allData.filter(d => d.brand === brand);
+            const groupedByObjective = {};
+            brandData.forEach(item => {
+                if (selectedObjectives.includes(item.objective)) { 
+                    if (!groupedByObjective[item.objective]) {
+                        groupedByObjective[item.objective] = [];
+                    }
+                    groupedByObjective[item.objective].push(item);
+                }
+            });
+
+            const finalColumns = [];
+            desiredObjectiveOrder.forEach(objName => {
+                if (selectedObjectives.includes(objName)) { 
+                    const itemsForObjective = groupedByObjective[objName] || [];
+                    itemsForObjective.forEach(item => {
+                        finalColumns.push({
+                            objectiveName: objName,
+                            fameAndFlowValue: item.fameAndFlow, 
+                            primaryKPIValue: item.primaryKPI, 
+                            dataItem: item 
+                        });
+                    });
+                }
+            });
+            
+            if (finalColumns.length === 0) {
+                const placeholderP = document.createElement('p');
+                placeholderP.id = 'tablePlaceholder';
+                placeholderP.textContent = `No data found for brand "${brand}" and the selected objectives. Please check the CSV data.`;
+                tableContainer.appendChild(placeholderP);
+                return;
+            }
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            // THEAD Row 1: Brand Measurement Framework
+            let trBrand = document.createElement('tr');
+            let thEmptyBrand = document.createElement('th'); 
+            trBrand.appendChild(thEmptyBrand);
+            let thBrandHeader = document.createElement('th'); 
+            thBrandHeader.textContent = `${brand} Measurement Framework`; 
+            thBrandHeader.colSpan = finalColumns.length; 
+            thBrandHeader.classList.add('brand-header-cell');
+            thBrandHeader.style.backgroundColor = currentTheme.tableBrandHeaderBgDark; 
+            thBrandHeader.style.color = currentTheme.tableBrandHeaderText; 
+            trBrand.appendChild(thBrandHeader);
+            thead.appendChild(trBrand);
+            table.appendChild(thead); 
+
+            // TBODY: Data Rows
+            const rowLabels = ["Fame & Flow", "Objective", "Primary KPI", "Benchmark(s)", "Optimization Proxy", "Diagnostic & Monitoring Metric"];
+            
+            rowLabels.forEach((labelName) => {
+                let trData = document.createElement('tr');
+                if (labelName === "Fame & Flow") {
+                    trData.classList.add('fame-flow-data-row'); 
+                } else if (labelName === "Objective") {
+                    trData.classList.add('objective-data-row'); 
+                }
+                let tdLabel = document.createElement('td');
+                tdLabel.textContent = labelName; 
+                tdLabel.classList.add('metric-label');
+                trData.appendChild(tdLabel);
+
+                if (labelName === "Fame & Flow" || labelName === "Objective") {
+                    if (finalColumns.length > 0) {
+                        let currentGroupDisplayValue = null;
+                        let currentGroupColspan = 0;
+                        
+                        let distinctGroupsInOrder = [];
+                        let groupIdentifier = labelName === "Fame & Flow" ? 'fameAndFlowValue' : 'objectiveName';
+                        
+                        finalColumns.forEach(col => {
+                            const groupVal = col[groupIdentifier];
+                            if (distinctGroupsInOrder.length === 0 || distinctGroupsInOrder[distinctGroupsInOrder.length - 1] !== groupVal) {
+                                distinctGroupsInOrder.push(groupVal);
+                            }
+                        });
+
+                        for (let i = 0; i < finalColumns.length; i++) {
+                            const col = finalColumns[i];
+                            const colDisplayValue = col[groupIdentifier];
+
+                            if (currentGroupDisplayValue === null) {
+                                currentGroupDisplayValue = colDisplayValue;
+                            }
+
+                            if (colDisplayValue === currentGroupDisplayValue) {
+                                currentGroupColspan++;
+                            } else {
+                                const td = document.createElement('td');
+                                td.textContent = currentGroupDisplayValue;
+                                td.colSpan = currentGroupColspan;
+                                if (labelName === "Fame & Flow") {
+                                    td.style.backgroundColor = currentTheme.tableFameFlowRowBg;
+                                    td.style.color = currentTheme.tableFameFlowRowText;
+                                } else {
+                                    td.style.backgroundColor = currentTheme.tableObjectiveRowBg;
+                                    td.style.color = currentTheme.tableObjectiveRowText;
+                                }
+                                
+                                const indexOfCurrentGroup = distinctGroupsInOrder.indexOf(currentGroupDisplayValue);
+                                if (indexOfCurrentGroup < distinctGroupsInOrder.length - 1) {
+                                     td.classList.add('objective-divider-right');
+                                }
+                                trData.appendChild(td);
+                                
+                                currentGroupDisplayValue = colDisplayValue;
+                                currentGroupColspan = 1;
+                            }
+                        }
+                        if (currentGroupDisplayValue !== null) {
+                            const td = document.createElement('td');
+                            td.textContent = currentGroupDisplayValue;
+                            td.colSpan = currentGroupColspan;
+                             if (labelName === "Fame & Flow") {
+                                td.style.backgroundColor = currentTheme.tableFameFlowRowBg;
+                                td.style.color = currentTheme.tableFameFlowRowText;
+                            } else {
+                                td.style.backgroundColor = currentTheme.tableObjectiveRowBg;
+                                td.style.color = currentTheme.tableObjectiveRowText;
+                            }
+                            trData.appendChild(td);
+                        }
+                    }
+                } else if (labelName === "Primary KPI" || labelName === "Benchmark(s)") {
+                    for (let i = 0; i < finalColumns.length; i++) {
+                        const col = finalColumns[i];
+                        const td = document.createElement('td');
+                        const metricValue = labelName === "Primary KPI" ? col.primaryKPIValue : col.dataItem[labelName === "Benchmark(s)" ? "benchmark" : ""];
+                        td.innerHTML = getMetricHTMLWithFootnote(metricValue, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef);
+                        
+                        const isLastKpiForThisObjective = (i === finalColumns.length - 1) || (finalColumns[i].objectiveName !== finalColumns[i+1].objectiveName);
+                        
+                        let distinctObjectivesInTableOrder = [];
+                        finalColumns.forEach(fc => {if (!distinctObjectivesInTableOrder.includes(fc.objectiveName)) distinctObjectivesInTableOrder.push(fc.objectiveName);});
+                        const isOverallLastObjectiveGroup = (distinctObjectivesInTableOrder.indexOf(col.objectiveName) === distinctObjectivesInTableOrder.length - 1);
+
+                        if (isLastKpiForThisObjective && !isOverallLastObjectiveGroup) {
+                            td.classList.add('objective-divider-right');
+                        }
+                        trData.appendChild(td);
+                    }
+                } else { 
+                    let dataKey = (labelName === "Optimization Proxy") ? "optimizationProxy" : "diagnosticMetric";
+                    let currentObjectiveProcessing = null; 
+                    let cellBufferForCurrentObjective = []; 
+                    
+                    let distinctObjectivesInTableOrder = [];
+                    finalColumns.forEach(fc => {if (!distinctObjectivesInTableOrder.includes(fc.objectiveName)) distinctObjectivesInTableOrder.push(fc.objectiveName);});
+
+                    for (let i = 0; i < finalColumns.length; i++) {
+                        const col = finalColumns[i];
+                        const item = col.dataItem;
+                        
+                        if (col.objectiveName !== currentObjectiveProcessing && currentObjectiveProcessing !== null) {
+                            const isCurrentObjectiveGroupTheLastInTable = (distinctObjectivesInTableOrder.indexOf(currentObjectiveProcessing) === distinctObjectivesInTableOrder.length - 1);
+                            processBufferedCells(trData, cellBufferForCurrentObjective, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef, !isCurrentObjectiveGroupTheLastInTable); 
+                            cellBufferForCurrentObjective = []; 
+                        }
+                        currentObjectiveProcessing = col.objectiveName; 
+
+                        let metricValue = (item && item[dataKey] !== undefined && item[dataKey] !== null && String(item[dataKey]).trim() !== "" && String(item[dataKey]).trim().toLowerCase() !== "n/a")
+                                          ? String(item[dataKey]).trim() 
+                                          : "N/A";
+                        cellBufferForCurrentObjective.push({ value: metricValue });
+                    }
+                    if (cellBufferForCurrentObjective.length > 0) {
+                         const isCurrentObjectiveGroupTheLastInTable = (distinctObjectivesInTableOrder.indexOf(currentObjectiveProcessing) === distinctObjectivesInTableOrder.length - 1);
+                        processBufferedCells(trData, cellBufferForCurrentObjective, dataSourcesMap, dataSourceToNumberMap, footnoteItems, nextFootnoteNumberRef, !isCurrentObjectiveGroupTheLastInTable);
+                    }
+                }
+                tbody.appendChild(trData);
+            });
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+
+            // FOOTNOTES
+            if (footnoteItems.length > 0) {
+                footnoteContainer.style.display = 'block'; 
+                const title = document.createElement('h3');
+                title.textContent = "Data Sources:";
+                footnoteContainer.appendChild(title);
+                const ol = document.createElement('ol'); 
+                footnoteItems.sort((a, b) => a.number - b.number); 
+                footnoteItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<sup>${item.number}</sup> ${item.text}`; 
+                    ol.appendChild(li);
+                });
+                footnoteContainer.appendChild(ol);
+            }
+        }
+    </script>
+</body>
+</html>
